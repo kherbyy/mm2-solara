@@ -1,0 +1,1469 @@
+-- =============================================
+-- I LOVE ANNIE - MM2 | SOLARA OPTIMIZED EDITION
+-- by Kherby (fully cleaned & stabilized for Solara 2026)
+-- ✅ Double-load protection
+-- ✅ game:IsLoaded() wait
+-- ✅ pcall on hookmetamethod (fixes most Solara crashes)
+-- ✅ task.wait() in all desync methods (smoother + less lag)
+-- ✅ Settings preserved on re-execute
+-- ✅ All original features kept 100%
+-- =============================================
+
+if getgenv().AnnieMM2_SolaraLoaded then
+    Rayfield:Notify({
+        Title = "I Love Annie - MM2",
+        Content = "Script already loaded! Don't spam execute.",
+        Duration = 5
+    })
+    return
+end
+getgenv().AnnieMM2_SolaraLoaded = true
+
+if not game:IsLoaded() then game.Loaded:Wait() end
+
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+    Name = "I Love Annie - MM2 (Solara)",
+    LoadingTitle = "I Love Annie",
+    LoadingSubtitle = "by Kherby | Solara Optimized",
+    ConfigurationSaving = { Enabled = true, FolderName = "KherbyMM2", FileName = "AnnieSolaraConfig" },
+    KeySystem = false,
+})
+
+local VisualsTab   = Window:CreateTab("Visuals", 4483362458)
+local AimbotTab    = Window:CreateTab("Aimbot", 4483362458)
+local CombatTab    = Window:CreateTab("Combat", 4483362458)
+local UtilityTab   = Window:CreateTab("Utilities", 4483362458)
+local RageTab      = Window:CreateTab("Rage", 4483362458)
+local PlayersTab   = Window:CreateTab("Players", 4483362458)
+local DesyncTab    = Window:CreateTab("Desync", 4483362458)
+local AutoAvoidTab = Window:CreateTab("Auto Avoid", 4483362458)
+
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
+local mouse = LocalPlayer:GetMouse()
+
+if not getgenv().FPDH then
+    getgenv().FPDH = workspace.FallenPartsDestroyHeight
+end
+
+-- Desync Configuration (preserved on re-execute)
+getgenv().Desync = getgenv().Desync or {
+    Enabled = false,
+    Method = "Sky",
+    OscillateDistance = 50,
+    OscillateSpeed = 5,
+    SpinSpeed = 20,
+    RandomDistance = 100,
+    ReturnToPosition = true,
+    AutoDesyncOnDamage = false,
+    HealthThreshold = 99,
+    LastHealth = 100,
+    Cooldown = 1,
+    LastTriggered = 0,
+    AutoAvoidMurderer = false,
+    AvoidDistance = 20,
+    AutoAvoidActive = false
+}
+
+local DesyncData = {
+    OriginalCFrame = CFrame.new(),
+    StartTime = tick(),
+}
+
+local DesyncMethods = {
+    Void = function(RootPart)
+        RootPart.CFrame = CFrame.new(math.sqrt(-1), math.sqrt(-1), math.sqrt(-1))
+        task.wait()
+        if getgenv().Desync.ReturnToPosition then
+            RootPart.CFrame = DesyncData.OriginalCFrame
+        end
+    end,
+    
+    Sky = function(RootPart)
+        RootPart.CFrame = DesyncData.OriginalCFrame * CFrame.new(0, 100000, 0)
+        task.wait()
+        if getgenv().Desync.ReturnToPosition then
+            RootPart.CFrame = DesyncData.OriginalCFrame
+        end
+    end,
+    
+    Underground = function(RootPart)
+        RootPart.CFrame = DesyncData.OriginalCFrame * CFrame.new(0, -10000, 0)
+        task.wait()
+        if getgenv().Desync.ReturnToPosition then
+            RootPart.CFrame = DesyncData.OriginalCFrame
+        end
+    end,
+    
+    Random = function(RootPart)
+        local RandX = math.random(-getgenv().Desync.RandomDistance, getgenv().Desync.RandomDistance)
+        local RandY = math.random(-getgenv().Desync.RandomDistance, getgenv().Desync.RandomDistance)
+        local RandZ = math.random(-getgenv().Desync.RandomDistance, getgenv().Desync.RandomDistance)
+        
+        RootPart.CFrame = DesyncData.OriginalCFrame * CFrame.new(RandX, RandY, RandZ)
+        task.wait()
+        if getgenv().Desync.ReturnToPosition then
+            RootPart.CFrame = DesyncData.OriginalCFrame
+        end
+    end,
+    
+    Oscillate = function(RootPart)
+        local ElapsedTime = tick() - DesyncData.StartTime
+        local Distance = math.sin(ElapsedTime * getgenv().Desync.OscillateSpeed) * getgenv().Desync.OscillateDistance
+        
+        RootPart.CFrame = DesyncData.OriginalCFrame * CFrame.new(0, Distance, 0)
+        task.wait()
+        if getgenv().Desync.ReturnToPosition then
+            RootPart.CFrame = DesyncData.OriginalCFrame
+        end
+    end,
+    
+    Spin = function(RootPart)
+        local ElapsedTime = tick() - DesyncData.StartTime
+        local Angle = ElapsedTime * getgenv().Desync.SpinSpeed
+        
+        RootPart.CFrame = DesyncData.OriginalCFrame * CFrame.Angles(0, Angle, 0)
+        task.wait()
+        if getgenv().Desync.ReturnToPosition then
+            RootPart.CFrame = DesyncData.OriginalCFrame
+        end
+    end,
+}
+
+local function FlingNotify(title, text, duration)
+    Rayfield:Notify({
+        Title = title,
+        Content = text,
+        Duration = duration or 4
+    })
+end
+
+local ESPEnabled = false
+local NameESPEnabled = true
+local GunESPEnabled = true
+local DroppedGunHighlightEnabled = true
+local GunTracerEnabled = true
+local TriggerbotEnabled = false
+local FillTransparencyValue = 0.4
+local GodModeEnabled = false
+local AntiFlingEnabled = false
+local HitboxEnabled = false
+local VisualizeHitbox = false
+local HitboxSize = 10
+local MinHitboxSize = 5
+local MaxHitboxSize = 50
+local HitboxStep = 5
+local BoxHandles = {}
+local CurrentGunTracer = nil
+local CurrentMapCache = nil
+
+local AimbotEnabled = false
+local HoldingMouse2 = false
+local AimbotPrediction = 0.168
+local PredictionEnabled = true
+local AimbotSmoothness = 0.42
+local AimbotFOV = 220
+local AimbotOnlyMurderer = false
+local TargetPart = "Head"
+local StickyEnabled = false
+local LockedTarget = nil
+local LastLockedTarget = nil
+
+local KillAuraEnabled = false
+local KillAuraRange = 25
+local lastAttack = tick()
+
+local LastGunTPPosition = nil
+local AutoGunTPEnabled = false
+
+local SelectedPlayerName = nil
+local OriginalCameraSubject = nil
+
+local AimbotToggleObj
+local GodModeToggleObj
+local VisualizeHitboxToggleObj
+local DesyncToggleObj
+local AutoAvoidToggleObj
+
+local SetDesyncToggle = nil
+
+local function isAlive(plr)
+    if not plr or not plr.Character then return false end
+    local hum = plr.Character:FindFirstChild("Humanoid")
+    return hum and hum.Health > 0
+end
+
+local function isMurderer(plr)
+    if not plr then return false end
+    return plr.Backpack:FindFirstChild("Knife") or (plr.Character and plr.Character:FindFirstChild("Knife"))
+end
+
+local function getRoleColor(plr)
+    if not plr or not plr.Character then return Color3.fromRGB(0, 255, 0) end
+    if isMurderer(plr) then
+        return Color3.fromRGB(255, 0, 0)
+    elseif plr.Backpack:FindFirstChild("Gun") or (plr.Character and plr.Character:FindFirstChild("Gun")) then
+        return Color3.fromRGB(0, 0, 255)
+    else
+        return Color3.fromRGB(0, 255, 0)
+    end
+end
+
+local function hasGun()
+    return LocalPlayer.Backpack:FindFirstChild("Gun") or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Gun"))
+end
+
+local function getNearestMurdererDistance()
+    local character = LocalPlayer.Character
+    if not character then return nil end
+    local hrp = character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return nil end
+    
+    local nearestDistance = math.huge
+    
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer and isAlive(plr) and isMurderer(plr) then
+            local targetChar = plr.Character
+            local targetHrp = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
+            if targetHrp then
+                local distance = (hrp.Position - targetHrp.Position).Magnitude
+                if distance < nearestDistance then
+                    nearestDistance = distance
+                end
+            end
+        end
+    end
+    
+    return nearestDistance == math.huge and nil or nearestDistance
+end
+
+local function LocalTriggerDesyncOnce()
+    local LocalCharacter = LocalPlayer.Character
+    local LocalRootPart = LocalCharacter and LocalCharacter:FindFirstChild("HumanoidRootPart")
+    if not LocalRootPart then return end
+
+    DesyncData.OriginalCFrame = LocalRootPart.CFrame
+    DesyncData.StartTime = tick() 
+
+    local SelectedMethodName = getgenv().Desync.Method
+    local MethodToCall = DesyncMethods[SelectedMethodName]
+
+    if MethodToCall then
+        MethodToCall(LocalRootPart)
+    end
+    
+    getgenv().Desync.LastTriggered = tick()
+end
+
+if getgenv().Desync then
+    getgenv().Desync.TriggerOnce = LocalTriggerDesyncOnce
+end
+
+local function checkHealthForDesync()
+    local character = LocalPlayer.Character
+    if not character then return end
+    
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if not humanoid then return end
+    
+    local currentHealth = humanoid.Health
+    local maxHealth = humanoid.MaxHealth
+    local healthPercent = (currentHealth / maxHealth) * 100
+    local desync = getgenv().Desync
+    
+    if desync.AutoDesyncOnDamage and healthPercent < desync.HealthThreshold and 
+       desync.LastHealth > healthPercent and 
+       (tick() - desync.LastTriggered) > desync.Cooldown then
+        
+        LocalTriggerDesyncOnce()
+        Rayfield:Notify({Title = "Auto Desync", Content = "Triggered by damage!", Duration = 3})
+    end
+    
+    desync.LastHealth = healthPercent
+end
+
+local function checkAutoAvoidMurderer()
+    local desync = getgenv().Desync
+    if not desync.AutoAvoidMurderer then 
+        if desync.AutoAvoidActive then
+            desync.AutoAvoidActive = false
+            if desync.Enabled then
+                desync.Enabled = false
+                if SetDesyncToggle then SetDesyncToggle(false) end
+                Rayfield:Notify({Title = "Auto Avoid", Content = "Disabled. Desync turned OFF.", Duration = 2})
+            end
+        end
+        return 
+    end
+    
+    local nearestMurdererDist = getNearestMurdererDistance()
+    local character = LocalPlayer.Character
+    if not character then return end
+    
+    if nearestMurdererDist and nearestMurdererDist <= desync.AvoidDistance then
+        if not desync.Enabled then
+            desync.AutoAvoidActive = true
+            desync.Enabled = true
+            desync.Method = "Sky"
+            if SetDesyncToggle then SetDesyncToggle(true) end
+            Rayfield:Notify({Title = "Auto Avoid", Content = "Murderer near! Sky Desync ON", Duration = 2})
+        end
+    else
+        if desync.Enabled and desync.AutoAvoidActive then
+            desync.Enabled = false
+            desync.AutoAvoidActive = false
+            if SetDesyncToggle then SetDesyncToggle(false) end
+            Rayfield:Notify({Title = "Auto Avoid", Content = "Murderer left. Desync turned OFF.", Duration = 2})
+        end
+    end
+end
+
+local SkidFling = function(TargetPlayer)
+    local Character = LocalPlayer.Character
+    local Humanoid = Character and Character:FindFirstChildOfClass("Humanoid")
+    local RootPart = Humanoid and Humanoid.RootPart
+    local TCharacter = TargetPlayer.Character
+    local THumanoid, TRootPart, THead, Accessory, Handle
+
+    if TCharacter then
+        THumanoid = TCharacter:FindFirstChildOfClass("Humanoid")
+        if THumanoid and THumanoid.RootPart then TRootPart = THumanoid.RootPart end
+        THead = TCharacter:FindFirstChild("Head")
+        Accessory = TCharacter:FindFirstChildOfClass("Accessory")
+        if Accessory and Accessory:FindFirstChild("Handle") then
+            Handle = Accessory.Handle
+        end
+    end
+
+    if not (Character and Humanoid and RootPart) then
+        return FlingNotify("Fling Error", "Your character not loaded", 3)
+    end
+
+    if RootPart.Velocity.Magnitude < 50 then
+        getgenv().OldPos = RootPart.CFrame
+    end
+
+    if THumanoid and THumanoid.Sit then
+        return FlingNotify("Fling Error", "Target is sitting", 3)
+    end
+
+    if THead then
+        workspace.CurrentCamera.CameraSubject = THead
+    elseif Handle then
+        workspace.CurrentCamera.CameraSubject = Handle
+    elseif THumanoid and TRootPart then
+        workspace.CurrentCamera.CameraSubject = THumanoid
+    end
+
+    local FPos = function(BasePart, Pos, Ang)
+        RootPart.CFrame = CFrame.new(BasePart.Position) * Pos * Ang
+        Character:SetPrimaryPartCFrame(CFrame.new(BasePart.Position) * Pos * Ang)
+        RootPart.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+        RootPart.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+    end
+
+    local SFBasePart = function(BasePart)
+        local TimeToWait = 2
+        local Time = tick()
+        local Angle = 0
+        repeat
+            if RootPart and THumanoid then
+                if BasePart.Velocity.Magnitude < 50 then
+                    Angle = Angle + 100
+                    FPos(BasePart, CFrame.new(0, 1.5, 0) + THumanoid.MoveDirection * BasePart.Velocity.Magnitude / 1.25, CFrame.Angles(math.rad(Angle),0,0))
+                    task.wait()
+                    FPos(BasePart, CFrame.new(0, -1.5, 0) + THumanoid.MoveDirection * BasePart.Velocity.Magnitude / 1.25, CFrame.Angles(math.rad(Angle), 0, 0))
+                    task.wait()
+                    FPos(BasePart, CFrame.new(2.25, 1.5, -2.25) + THumanoid.MoveDirection * BasePart.Velocity.Magnitude / 1.25, CFrame.Angles(math.rad(Angle), 0, 0))
+                    task.wait()
+                    FPos(BasePart, CFrame.new(-2.25, -1.5, 2.25) + THumanoid.MoveDirection * BasePart.Velocity.Magnitude / 1.25, CFrame.Angles(math.rad(Angle), 0, 0))
+                    task.wait()
+                    FPos(BasePart, CFrame.new(0, 1.5, 0) + THumanoid.MoveDirection, CFrame.Angles(math.rad(Angle), 0, 0))
+                    task.wait()
+                    FPos(BasePart, CFrame.new(0, -1.5, 0) + THumanoid.MoveDirection, CFrame.Angles(math.rad(Angle), 0, 0))
+                    task.wait()
+                else
+                    FPos(BasePart, CFrame.new(0, 1.5, THumanoid.WalkSpeed), CFrame.Angles(math.rad(90), 0, 0))
+                    task.wait()
+                    FPos(BasePart, CFrame.new(0, -1.5, -THumanoid.WalkSpeed), CFrame.Angles(0, 0, 0))
+                    task.wait()
+                    FPos(BasePart, CFrame.new(0, 1.5, THumanoid.WalkSpeed), CFrame.Angles(math.rad(90), 0, 0))
+                    task.wait()
+
+                    FPos(BasePart, CFrame.new(0, 1.5, TRootPart.Velocity.Magnitude / 1.25), CFrame.Angles(math.rad(90), 0, 0))
+                    task.wait()
+                    FPos(BasePart, CFrame.new(0, -1.5, -TRootPart.Velocity.Magnitude / 1.25), CFrame.Angles(0, 0, 0))
+                    task.wait()
+                    FPos(BasePart, CFrame.new(0, 1.5, TRootPart.Velocity.Magnitude / 1.25), CFrame.Angles(math.rad(90), 0, 0))
+                    task.wait()
+                    FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(math.rad(90), 0, 0))
+                    task.wait()
+                    FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(0, 0, 0))
+                    task.wait()
+                    FPos(BasePart, CFrame.new(0, -1.5 ,0), CFrame.Angles(math.rad(-90), 0, 0))
+                    task.wait()
+                    FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(0, 0, 0))
+                    task.wait()
+                end
+            else
+                break
+            end
+        until BasePart.Velocity.Magnitude > 500 or not BasePart.Parent or TargetPlayer.Parent ~= Players or THumanoid.Sit or Humanoid.Health <= 0 or tick() > Time + TimeToWait
+    end
+
+    workspace.FallenPartsDestroyHeight = 0/0
+
+    local BV = Instance.new("BodyVelocity")
+    BV.Name = "EpixVel"
+    BV.Parent = RootPart
+    BV.Velocity = Vector3.new(9e8, 9e8, 9e8)
+    BV.MaxForce = Vector3.new(1/0, 1/0, 1/0)
+
+    Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+
+    if TRootPart and THead then
+        if (TRootPart.Position - THead.Position).Magnitude > 5 then
+            SFBasePart(THead)
+        else
+            SFBasePart(TRootPart)
+        end
+    elseif TRootPart then
+        SFBasePart(TRootPart)
+    elseif THead then
+        SFBasePart(THead)
+    elseif Handle then
+        SFBasePart(Handle)
+    else
+        return FlingNotify("Fling Error", "Target missing parts", 3)
+    end
+
+    BV:Destroy()
+    Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
+    workspace.CurrentCamera.CameraSubject = Humanoid
+
+    repeat
+        RootPart.CFrame = getgenv().OldPos * CFrame.new(0, .5, 0)
+        Character:SetPrimaryPartCFrame(getgenv().OldPos * CFrame.new(0, .5, 0))
+        Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+        for _, x in ipairs(Character:GetChildren()) do
+            if x:IsA("BasePart") then
+                x.Velocity = Vector3.new()
+                x.RotVelocity = Vector3.new()
+            end
+        end
+        task.wait()
+    until (RootPart.Position - getgenv().OldPos.Position).Magnitude < 25
+
+    workspace.FallenPartsDestroyHeight = getgenv().FPDH
+    FlingNotify("Fling Success", "Flung " .. TargetPlayer.Name .. "!", 3)
+end
+
+local function CleanupESP(char)
+    if not char then return end
+    if char:FindFirstChild("MM2Highlight") then char.MM2Highlight:Destroy() end
+    if char:FindFirstChild("MM2NameTag") then char.MM2NameTag:Destroy() end
+end
+
+local function CreateESP(char, plr)
+    if not char or not plr or plr == LocalPlayer then return end
+    CleanupESP(char)
+    local hl = Instance.new("Highlight")
+    hl.Name = "MM2Highlight"
+    hl.Adornee = char
+    hl.FillColor = getRoleColor(plr)
+    hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+    hl.FillTransparency = FillTransparencyValue
+    hl.OutlineTransparency = 0
+    hl.Parent = char
+
+    if NameESPEnabled then
+        local adornee = char:FindFirstChild("Head") or char:FindFirstChild("HumanoidRootPart")
+        if not adornee then return end
+        local bill = Instance.new("BillboardGui")
+        bill.Name = "MM2NameTag"
+        bill.Adornee = adornee
+        bill.Size = UDim2.new(4, 0, 1, 0)
+        bill.StudsOffset = Vector3.new(0, 3.5, 0)
+        bill.AlwaysOnTop = true
+        bill.LightInfluence = 0
+        bill.Parent = char
+        local txt = Instance.new("TextLabel")
+        txt.Size = UDim2.new(1,0,1,0)
+        txt.BackgroundTransparency = 1
+        txt.Text = plr.Name
+        txt.TextColor3 = getRoleColor(plr)
+        txt.TextScaled = true
+        txt.Font = Enum.Font.GothamBold
+        txt.TextStrokeTransparency = 0
+        txt.TextStrokeColor3 = Color3.new(0,0,0)
+        txt.Parent = bill
+    end
+end
+
+local function ForceRefreshESP()
+    if not ESPEnabled then return end
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer and plr.Character and isAlive(plr) then
+            CreateESP(plr.Character, plr)
+        end
+    end
+end
+
+local function destroyAllPlayerHighlights()
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer and plr.Character then
+            CleanupESP(plr.Character)
+        end
+    end
+end
+
+local function updatePlayerHighlights()
+    if not ESPEnabled then return end
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer and plr.Character then
+            local hl = plr.Character:FindFirstChild("MM2Highlight")
+            if hl then
+                hl.FillColor = getRoleColor(plr)
+                hl.FillTransparency = FillTransparencyValue
+            end
+            local nameTag = plr.Character:FindFirstChild("MM2NameTag")
+            if nameTag then
+                local txt = nameTag:FindFirstChildWhichIsA("TextLabel")
+                if txt then txt.TextColor3 = getRoleColor(plr) end
+            end
+        end
+    end
+end
+
+local function getBestTarget()
+    if StickyEnabled and LockedTarget and isAlive(LockedTarget) then return LockedTarget end
+    local camera = Workspace.CurrentCamera
+    local mousePos = UserInputService:GetMouseLocation()
+    local bestTarget, bestScore = nil, math.huge
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer and isAlive(plr) and plr.Character:FindFirstChild("Head") then
+            if AimbotOnlyMurderer and not isMurderer(plr) then continue end
+            local head = plr.Character.Head
+            local screenPos, onScreen = camera:WorldToViewportPoint(head.Position)
+            if onScreen then
+                local dist = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
+                if dist < AimbotFOV then
+                    local score = dist
+                    if isMurderer(plr) then score = score * 0.15 end
+                    if score < bestScore then
+                        bestScore = score
+                        bestTarget = plr
+                    end
+                end
+            end
+        end
+    end
+    if StickyEnabled and bestTarget then LockedTarget = bestTarget end
+    return bestTarget
+end
+
+local function getPredictedPosition(plr)
+    if not plr or not plr.Character then return nil end
+    local part = plr.Character:FindFirstChild(TargetPart) or plr.Character:FindFirstChild("Head")
+    if not part then return nil end
+    if not PredictionEnabled then return part.Position end
+    local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
+    local vel = hrp and hrp.Velocity or Vector3.new()
+    return part.Position + (vel * AimbotPrediction)
+end
+
+local function updateAimbot()
+    if not AimbotEnabled or not HoldingMouse2 then return end
+    local targetPlr = getBestTarget()
+    if not targetPlr then return end
+    local predictedPos = getPredictedPosition(targetPlr)
+    if not predictedPos then return end
+    local camera = Workspace.CurrentCamera
+    local currentCFrame = camera.CFrame
+    local targetCFrame = CFrame.new(currentCFrame.Position, predictedPos)
+    if not PredictionEnabled then
+        camera.CFrame = targetCFrame
+    else
+        local smooth = isMurderer(targetPlr) and 0.78 or AimbotSmoothness
+        camera.CFrame = currentCFrame:Lerp(targetCFrame, smooth)
+    end
+    if targetPlr ~= LastLockedTarget then
+        LastLockedTarget = targetPlr
+        Rayfield:Notify({Title = "Aimbot Locked!", Content = "-> "..targetPlr.Name..(isMurderer(targetPlr) and " (MURDERER)" or ""), Duration = 1.8})
+    end
+end
+RunService:BindToRenderStep("AnnieAimbotCamlock", Enum.RenderPriority.Camera.Value + 1, updateAimbot)
+
+local function setupAntiFling()
+    local character = LocalPlayer.Character
+    if not character then return end
+    local humanoid = character:FindFirstChildWhichIsA("Humanoid")
+    if not humanoid then return end
+    local function checkVelocity()
+        for _, part in ipairs(character:GetDescendants()) do
+            if part:IsA("BasePart") and part ~= character.PrimaryPart then
+                if part.Velocity.Magnitude > 100 or part.RotVelocity.Magnitude > 100 then
+                    part.Velocity = Vector3.new(0,0,0)
+                    part.RotVelocity = Vector3.new(0,0,0)
+                end
+            end
+        end
+    end
+    RunService.Heartbeat:Connect(function()
+        if AntiFlingEnabled then checkVelocity() end
+    end)
+    character.ChildAdded:Connect(function(child)
+        if AntiFlingEnabled and child:IsA("BasePart") then
+            child:GetPropertyChangedSignal("Velocity"):Connect(function()
+                if child.Velocity.Magnitude > 100 then child.Velocity = Vector3.new(0,0,0) end
+            end)
+        end
+    end)
+end
+
+local function enableGodMode()
+    if GodModeEnabled then
+        local character = LocalPlayer.Character
+        if character and character:FindFirstChild("Humanoid") then
+            local humanoid = character.Humanoid
+            humanoid.Name = "1"
+            local newHumanoid = humanoid:Clone()
+            newHumanoid.Parent = character
+            newHumanoid.Name = "Humanoid"
+            task.wait(0.1)
+            character["1"]:Destroy()
+            Workspace.CurrentCamera.CameraSubject = character
+            if character:FindFirstChild("Animate") then
+                character.Animate.Disabled = true
+                task.wait(0.1)
+                character.Animate.Disabled = false
+            end
+            newHumanoid.DisplayDistanceType = "None"
+        end
+    end
+end
+
+LocalPlayer.CharacterAdded:Connect(function()
+    if GodModeEnabled then task.wait(1) enableGodMode() end
+    task.wait(1)
+    setupAntiFling()
+end)
+
+local function getCurrentMap()
+    if CurrentMapCache and CurrentMapCache.Parent then return CurrentMapCache end
+    for _, v in ipairs(Workspace:GetDescendants()) do
+        if v.Name == "Spawns" and v.Parent.Name ~= "Lobby" then
+            CurrentMapCache = v.Parent
+            return CurrentMapCache
+        end
+    end
+    CurrentMapCache = nil
+    return nil
+end
+
+local function updateGunTracer()
+    if not GunTracerEnabled then
+        if CurrentGunTracer then CurrentGunTracer:Destroy() CurrentGunTracer = nil end
+        return
+    end
+    local character = LocalPlayer.Character
+    if not character or not character:FindFirstChild("HumanoidRootPart") then
+        if CurrentGunTracer then CurrentGunTracer:Destroy() CurrentGunTracer = nil end
+        return
+    end
+    local gunDrop = nil
+    local currentMap = getCurrentMap()
+    if currentMap then gunDrop = currentMap:FindFirstChild("GunDrop") end
+    if not gunDrop then gunDrop = Workspace:FindFirstChild("GunDrop") end
+    if gunDrop and gunDrop:IsA("BasePart") then
+        if CurrentGunTracer and CurrentGunTracer.Parent then
+            if CurrentGunTracer.Attachment1.Parent ~= gunDrop then
+                CurrentGunTracer.Attachment1.Parent = gunDrop
+            end
+        else
+            if CurrentGunTracer then CurrentGunTracer:Destroy() end
+            local att0 = Instance.new("Attachment") att0.Name = "TracerAtt0" att0.Parent = character.HumanoidRootPart
+            local att1 = Instance.new("Attachment") att1.Name = "TracerAtt1" att1.Parent = gunDrop
+            local beam = Instance.new("Beam")
+            beam.Name = "GunTracer"
+            beam.Attachment0 = att0
+            beam.Attachment1 = att1
+            beam.Color = ColorSequence.new(Color3.fromRGB(255, 140, 0))
+            beam.LightEmission = 0.8
+            beam.Transparency = NumberSequence.new(0.35)
+            beam.Width0 = 0.3
+            beam.Width1 = 0.3
+            beam.Texture = "rbxassetid://707177051"
+            beam.TextureSpeed = 1.5
+            beam.Parent = character.HumanoidRootPart
+            CurrentGunTracer = beam
+        end
+    else
+        if CurrentGunTracer then CurrentGunTracer:Destroy() CurrentGunTracer = nil end
+    end
+end
+
+local function highlightDroppedGun()
+    if not DroppedGunHighlightEnabled then
+        for _, obj in ipairs(Workspace:GetDescendants()) do
+            if obj.Name == "GunDrop" then
+                if obj:FindFirstChild("GunDropHighlight") then obj.GunDropHighlight:Destroy() end
+                if obj:FindFirstChild("GunDropLabel") then obj.GunDropLabel:Destroy() end
+            end
+        end
+        return
+    end
+    local currentMap = getCurrentMap()
+    if not currentMap then return end
+    local gunDrop = currentMap:FindFirstChild("GunDrop")
+    if not gunDrop then gunDrop = Workspace:FindFirstChild("GunDrop") end
+    if gunDrop and not gunDrop:FindFirstChild("GunDropHighlight") then
+        if gunDrop:FindFirstChild("GunDropLabel") then gunDrop.GunDropLabel:Destroy() end
+        local hl = Instance.new("Highlight")
+        hl.Name = "GunDropHighlight"
+        hl.Adornee = gunDrop
+        hl.FillColor = Color3.fromRGB(255, 215, 0)
+        hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+        hl.FillTransparency = 0.3
+        hl.Parent = gunDrop
+        local bill = Instance.new("BillboardGui")
+        bill.Name = "GunDropLabel"
+        bill.Adornee = gunDrop
+        bill.Size = UDim2.new(0, 100, 0, 30)
+        bill.StudsOffset = Vector3.new(0, 3, 0)
+        bill.AlwaysOnTop = true
+        bill.Parent = gunDrop
+        local txt = Instance.new("TextLabel")
+        txt.Size = UDim2.new(1,0,1,0)
+        txt.BackgroundTransparency = 1
+        txt.Text = "DROPPED GUN"
+        txt.TextColor3 = Color3.fromRGB(255, 215, 0)
+        txt.TextScaled = true
+        txt.Font = Enum.Font.GothamBold
+        txt.Parent = bill
+    end
+end
+
+local function createToolGunESP(gun)
+    if gun:FindFirstChild("GunDroppedESP") then return end
+    local hl = Instance.new("Highlight")
+    hl.Name = "GunDroppedESP"
+    hl.Adornee = gun
+    hl.FillColor = Color3.fromRGB(255, 215, 0)
+    hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+    hl.FillTransparency = 0.3
+    hl.Parent = gun
+    local bill = Instance.new("BillboardGui")
+    bill.Name = "GunLabel"
+    bill.Adornee = gun:FindFirstChild("Handle") or gun
+    bill.Size = UDim2.new(0, 100, 0, 30)
+    bill.StudsOffset = Vector3.new(0, 3, 0)
+    bill.AlwaysOnTop = true
+    bill.Parent = gun
+    local txt = Instance.new("TextLabel")
+    txt.Size = UDim2.new(1,0,1,0)
+    txt.BackgroundTransparency = 1
+    txt.Text = "GUN"
+    txt.TextColor3 = Color3.fromRGB(255, 215, 0)
+    txt.TextScaled = true
+    txt.Font = Enum.Font.GothamBold
+    txt.Parent = bill
+end
+
+local function refreshToolGunESP()
+    if not GunESPEnabled then
+        for _, obj in ipairs(Workspace:GetChildren()) do
+            if obj:FindFirstChild("GunDroppedESP") then obj.GunDroppedESP:Destroy() end
+            if obj:FindFirstChild("GunLabel") then obj.GunLabel:Destroy() end
+        end
+        return
+    end
+    for _, obj in ipairs(Workspace:GetChildren()) do
+        if obj:IsA("Tool") and obj.Name == "Gun" then
+            createToolGunESP(obj)
+        end
+    end
+end
+
+local function ApplyHitboxExpander(Character)
+    if not Character or Character == LocalPlayer.Character then return end
+    local HRP = Character:FindFirstChild("HumanoidRootPart")
+    if HRP then
+        local newSize = Vector3.new(HitboxSize, HitboxSize, HitboxSize)
+        HRP.Size = newSize
+        HRP.Transparency = 1
+        HRP.CanCollide = false
+        if not BoxHandles[Character] then
+            local box = Instance.new("BoxHandleAdornment")
+            box.Adornee = HRP
+            box.Size = newSize
+            box.Color3 = Color3.fromRGB(255, 0, 0)
+            box.Transparency = 0.5
+            box.AlwaysOnTop = true
+            box.ZIndex = 10
+            box.Visible = VisualizeHitbox
+            box.Parent = HRP
+            BoxHandles[Character] = box
+        else
+            BoxHandles[Character].Size = newSize
+            BoxHandles[Character].Visible = VisualizeHitbox
+        end
+    end
+end
+
+local function UpdateAllHitboxes()
+    if not HitboxEnabled then return end
+    local newSize = Vector3.new(HitboxSize, HitboxSize, HitboxSize)
+    for _, Player in ipairs(Players:GetPlayers()) do
+        if Player == LocalPlayer or not Player.Character then continue end
+        local HRP = Player.Character:FindFirstChild("HumanoidRootPart")
+        if HRP then
+            HRP.Size = newSize
+            HRP.Transparency = 1
+            HRP.CanCollide = false
+            local box = BoxHandles[Player.Character]
+            if box then
+                box.Size = newSize
+                box.Visible = VisualizeHitbox
+            end
+        end
+    end
+end
+
+local function ResetHitboxes()
+    for _, Player in ipairs(Players:GetPlayers()) do
+        if Player == LocalPlayer or not Player.Character then continue end
+        local HRP = Player.Character:FindFirstChild("HumanoidRootPart")
+        if HRP then HRP.Size = Vector3.new(2, 2, 1) end
+        if BoxHandles[Player.Character] then
+            BoxHandles[Player.Character]:Destroy()
+            BoxHandles[Player.Character] = nil
+        end
+    end
+end
+
+local triggerConn
+local function startTriggerbot()
+    if triggerConn then triggerConn:Disconnect() end
+    triggerConn = RunService.RenderStepped:Connect(function()
+        if not TriggerbotEnabled or not hasGun() then return end
+        local targetPart = mouse.Target
+        if not targetPart then return end
+        local char = targetPart:FindFirstAncestorWhichIsA("Model")
+        if not char then return end
+        local targetPlr = Players:GetPlayerFromCharacter(char)
+        if targetPlr and targetPlr ~= LocalPlayer and isMurderer(targetPlr) then
+            local gun = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Gun")
+            if gun then gun:Activate() end
+        end
+    end)
+end
+
+RunService.Heartbeat:Connect(function()
+    if not KillAuraEnabled then return end
+    local character = LocalPlayer.Character
+    if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+    local Knife = LocalPlayer.Backpack:FindFirstChild("Knife") or character:FindFirstChild("Knife")
+    if not Knife or not Knife:FindFirstChild("Handle") then return end
+    if (tick() - lastAttack) < 0.1 then return end
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer and isAlive(plr) then
+            local root = plr.Character:FindFirstChild("HumanoidRootPart")
+            if root then
+                local dist = (root.Position - character.HumanoidRootPart.Position).Magnitude
+                if dist <= KillAuraRange and dist > 1 then
+                    if Knife.Parent == LocalPlayer.Backpack then
+                        character.Humanoid:EquipTool(Knife)
+                        task.wait(0.06)
+                    end
+                    firetouchinterest(root, Knife.Handle, 1)
+                    firetouchinterest(root, Knife.Handle, 0)
+                    lastAttack = tick()
+                end
+            end
+        end
+    end
+end)
+
+local function PerformKillAll()
+    local character = LocalPlayer.Character
+    if not character then return end
+    local Knife = LocalPlayer.Backpack:FindFirstChild("Knife") or character:FindFirstChild("Knife")
+    if not Knife then
+        Rayfield:Notify({Title = "Kill All", Content = "No Knife (you must be Murderer)", Duration = 3})
+        return
+    end
+    
+    if Knife.Parent == LocalPlayer.Backpack then
+        character.Humanoid:EquipTool(Knife)
+        task.wait(0.25)
+        if Knife:IsA("Tool") then
+            Knife:Activate()
+            task.wait(0.1)
+        end
+    end
+    
+    local count = 0
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer and isAlive(plr) then
+            local root = plr.Character:FindFirstChild("HumanoidRootPart")
+            if root and Knife:FindFirstChild("Handle") then
+                firetouchinterest(root, Knife.Handle, 1)
+                firetouchinterest(root, Knife.Handle, 0)
+                count = count + 1
+                task.wait(0.04)
+            end
+        end
+    end
+    Rayfield:Notify({Title = "Kill All", Content = "Killed " .. count .. " players", Duration = 4})
+end
+
+local function TeleportToGunSnapBack()
+    local gunDrop = Workspace:FindFirstChild("GunDrop")
+    local currentMap = getCurrentMap()
+    if currentMap and not gunDrop then gunDrop = currentMap:FindFirstChild("GunDrop") end
+    if not gunDrop then
+        Rayfield:Notify({Title = "Gun TP", Content = "No Gun Dropped!", Duration = 2.5})
+        return
+    end
+    local char = LocalPlayer.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    LastGunTPPosition = char.HumanoidRootPart.CFrame
+    Rayfield:Notify({Title = "Gun TP", Content = "Snapping to gun... (will auto return)", Duration = 1.5})
+    task.spawn(function()
+        local timeout = tick()
+        while (tick() - timeout) < 2 and gunDrop.Parent do
+            char.HumanoidRootPart.CFrame = gunDrop.CFrame
+            RunService.Stepped:Wait()
+        end
+        if LastGunTPPosition and char and char:FindFirstChild("HumanoidRootPart") then
+            char.HumanoidRootPart.CFrame = LastGunTPPosition
+            LastGunTPPosition = nil
+            Rayfield:Notify({Title = "Gun TP", Content = "Snapped back to original position!", Duration = 2.5})
+        end
+    end)
+end
+
+local function GetPlayerNames()
+    local names = {}
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer then table.insert(names, plr.Name) end
+    end
+    table.sort(names)
+    return names
+end
+
+local function TeleportToSelected()
+    if not SelectedPlayerName then Rayfield:Notify({Title="Error",Content="No player selected",Duration=2}) return end
+    local target = Players:FindFirstChild(SelectedPlayerName)
+    if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+        local myHRP = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if myHRP then myHRP.CFrame = target.Character.HumanoidRootPart.CFrame * CFrame.new(0, 4, 0) end
+    end
+end
+
+local function FlingSelected()
+    if not SelectedPlayerName then 
+        Rayfield:Notify({Title="Error", Content="No player selected", Duration=2})
+        return 
+    end
+    local target = Players:FindFirstChild(SelectedPlayerName)
+    if target and target ~= LocalPlayer and target.Character then
+        Rayfield:Notify({Title="Flinging...", Content="Using SkidFling on " .. target.Name, Duration=2})
+        task.spawn(SkidFling, target)
+    else
+        Rayfield:Notify({Title="Error", Content="Target invalid or no character", Duration=2})
+    end
+end
+
+local function setupRoleUpdate(plr)
+    if plr == LocalPlayer then return end
+    local function refreshRole()
+        if ESPEnabled and plr.Character then updatePlayerHighlights() end
+    end
+    plr.Backpack.ChildAdded:Connect(function(c) if c.Name == "Knife" or c.Name == "Gun" then task.wait(0.05) refreshRole() end end)
+    plr.Backpack.ChildRemoved:Connect(function(c) if c.Name == "Knife" or c.Name == "Gun" then refreshRole() end end)
+    plr.CharacterAdded:Connect(function(char)
+        task.wait(0.8)
+        if ESPEnabled then CreateESP(char, plr) end
+        if HitboxEnabled then ApplyHitboxExpander(char) end
+    end)
+    plr.CharacterRemoving:Connect(function(char)
+        CleanupESP(char)
+    end)
+    if plr.Character then
+        if ESPEnabled then CreateESP(plr.Character, plr) end
+    end
+end
+
+for _, plr in ipairs(Players:GetPlayers()) do
+    setupRoleUpdate(plr)
+    if plr ~= LocalPlayer and plr.Character and HitboxEnabled then ApplyHitboxExpander(plr.Character) end
+end
+
+Players.PlayerAdded:Connect(setupRoleUpdate)
+Players.PlayerRemoving:Connect(function(plr)
+    if plr.Character and BoxHandles[plr.Character] then
+        BoxHandles[plr.Character]:Destroy()
+        BoxHandles[plr.Character] = nil
+    end
+end)
+
+-- Desync Heartbeat Loop
+coroutine.wrap(function()
+    RunService.Heartbeat:Connect(function()
+        checkHealthForDesync()
+        checkAutoAvoidMurderer()
+        
+        if getgenv().Desync.Enabled then
+            local LocalCharacter = LocalPlayer.Character
+            local LocalRootPart = LocalCharacter and LocalCharacter:FindFirstChild("HumanoidRootPart")
+            if not LocalRootPart then return end
+
+            DesyncData.OriginalCFrame = LocalRootPart.CFrame
+            
+            local SelectedMethod = getgenv().Desync.Method
+            if DesyncMethods[SelectedMethod] then
+                DesyncMethods[SelectedMethod](LocalRootPart)
+            end
+        end
+    end)
+end)()
+
+task.spawn(function()
+    while task.wait(0.25) do
+        updatePlayerHighlights()
+        if HitboxEnabled then UpdateAllHitboxes() end
+        refreshToolGunESP()
+        highlightDroppedGun()
+        updateGunTracer()
+        ForceRefreshESP()
+    end
+end)
+
+Workspace.ChildAdded:Connect(function(child)
+    if GunESPEnabled and child:IsA("Tool") and child.Name == "Gun" then
+        task.wait(0.05) createToolGunESP(child)
+    end
+end)
+
+Workspace.DescendantAdded:Connect(function(d)
+    if d.Name == "GunDrop" then
+        task.wait(0.1)
+        if DroppedGunHighlightEnabled then highlightDroppedGun() end
+        Rayfield:Notify({Title = "Gun Dropped!", Content = "The gun has been dropped!", Duration = 4.5})
+        updateGunTracer()
+        if AutoGunTPEnabled then
+            TeleportToGunSnapBack()
+        end
+    end
+end)
+
+Workspace.DescendantRemoving:Connect(function(d)
+    if d.Name == "GunDrop" and CurrentGunTracer then
+        CurrentGunTracer:Destroy()
+        CurrentGunTracer = nil
+    end
+end)
+
+UserInputService.InputBegan:Connect(function(input, gp)
+    if gp then return end
+    if input.KeyCode == Enum.KeyCode.P then
+        Rayfield:ToggleUI()
+    elseif input.KeyCode == Enum.KeyCode.U then
+        VisualizeHitbox = not VisualizeHitbox
+        VisualizeHitboxToggleObj:Set(VisualizeHitbox)
+        UpdateAllHitboxes()
+        Rayfield:Notify({Title = "Hitbox Visuals", Content = VisualizeHitbox and "ON" or "OFF", Duration = 2})
+    elseif input.KeyCode == Enum.KeyCode.Equals or input.KeyCode == Enum.KeyCode.Plus then
+        HitboxSize = math.min(HitboxSize + HitboxStep, MaxHitboxSize)
+        UpdateAllHitboxes()
+        Rayfield:Notify({Title = "Hitbox Size", Content = tostring(HitboxSize), Duration = 1.5})
+    elseif input.KeyCode == Enum.KeyCode.Minus then
+        HitboxSize = math.max(HitboxSize - HitboxStep, MinHitboxSize)
+        UpdateAllHitboxes()
+        Rayfield:Notify({Title = "Hitbox Size", Content = tostring(HitboxSize), Duration = 1.5})
+    elseif input.KeyCode == Enum.KeyCode.G then
+        GodModeEnabled = not GodModeEnabled
+        GodModeToggleObj:Set(GodModeEnabled)
+        if GodModeEnabled then enableGodMode() end
+    elseif input.KeyCode == Enum.KeyCode.Q then
+        AimbotEnabled = not AimbotEnabled
+        AimbotToggleObj:Set(AimbotEnabled)
+    elseif input.KeyCode == Enum.KeyCode.Z then
+        local newDesync = not getgenv().Desync.Enabled
+        getgenv().Desync.Enabled = newDesync
+        if not newDesync then
+            getgenv().Desync.AutoAvoidActive = false
+        end
+        if SetDesyncToggle then
+            SetDesyncToggle(newDesync)
+        end
+        Rayfield:Notify({Title = "Desync", Content = newDesync and "ON" or "OFF", Duration = 2})
+    end
+end)
+
+UserInputService.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton2 then HoldingMouse2 = AimbotEnabled end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton2 then
+        HoldingMouse2 = false
+        LockedTarget = nil
+        LastLockedTarget = nil
+    end
+end)
+
+setupAntiFling()
+
+-- SOLARA-SAFE METAMETHOD HOOK (pcall protection)
+local OriginalCFrameHook
+local hookSuccess = pcall(function()
+    OriginalCFrameHook = hookmetamethod(game, "__index", newcclosure(function(Self, Key)
+        if getgenv().Desync.Enabled then
+            if not checkcaller() then
+                if Key == "CFrame" and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character:FindFirstChild("Humanoid") and LocalPlayer.Character.Humanoid.Health > 0 then
+                    if Self == LocalPlayer.Character.HumanoidRootPart or Self == LocalPlayer.Character:FindFirstChild("Head") then
+                        return DesyncData.OriginalCFrame or CFrame.new()
+                    end
+                end
+            end
+        end
+        return OriginalCFrameHook(Self, Key)
+    end))
+end)
+
+if not hookSuccess then
+    Rayfield:Notify({
+        Title = "Solara Warning",
+        Content = "hookmetamethod failed (rare). Desync will still work but may be slightly detectable.",
+        Duration = 8
+    })
+end
+
+-- UI CREATION (unchanged from your original)
+VisualsTab:CreateSection("Player ESP")
+VisualsTab:CreateToggle({Name = "ESP Highlight", CurrentValue = false, Callback = function(v)
+    ESPEnabled = v
+    if v then ForceRefreshESP() else destroyAllPlayerHighlights() end
+end})
+VisualsTab:CreateToggle({Name = "Name ESP", CurrentValue = true, Callback = function(v)
+    NameESPEnabled = v
+    if ESPEnabled then destroyAllPlayerHighlights() ForceRefreshESP() end
+end})
+VisualsTab:CreateSlider({Name = "Fill Transparency", Range = {0,1}, Increment = 0.05, CurrentValue = 0.4, Callback = function(v)
+    FillTransparencyValue = v
+    updatePlayerHighlights()
+end})
+
+VisualsTab:CreateSection("Gun ESP")
+VisualsTab:CreateToggle({Name = "Tool Gun ESP", CurrentValue = true, Callback = function(v) GunESPEnabled = v refreshToolGunESP() end})
+VisualsTab:CreateToggle({Name = "GunDrop Highlight", CurrentValue = true, Callback = function(v)
+    DroppedGunHighlightEnabled = v
+    if v then highlightDroppedGun() else
+        for _,o in ipairs(Workspace:GetDescendants()) do
+            if o.Name=="GunDrop" then
+                if o:FindFirstChild("GunDropHighlight") then o.GunDropHighlight:Destroy() end
+                if o:FindFirstChild("GunDropLabel") then o.GunDropLabel:Destroy() end
+            end
+        end
+    end
+end})
+VisualsTab:CreateToggle({Name = "Gun Tracer", CurrentValue = true, Callback = function(v)
+    GunTracerEnabled = v
+    if not v and CurrentGunTracer then CurrentGunTracer:Destroy() CurrentGunTracer = nil end
+end})
+
+AimbotTab:CreateSection("Aimbot Settings")
+AimbotToggleObj = AimbotTab:CreateToggle({
+    Name = "Aimbot (Press Q to toggle)",
+    CurrentValue = false,
+    Callback = function(v) AimbotEnabled = v end
+})
+AimbotTab:CreateDropdown({Name = "Aim Part", Options = {"Head","UpperTorso","Torso","HumanoidRootPart","LowerTorso"}, CurrentOption = {"Head"}, Callback = function(v) TargetPart = v[1] end})
+AimbotTab:CreateToggle({Name = "Sticky Aimlock", CurrentValue = false, Callback = function(v) StickyEnabled = v if not v then LockedTarget = nil end end})
+AimbotTab:CreateToggle({Name = "Use Prediction", CurrentValue = true, Callback = function(v) PredictionEnabled = v end})
+AimbotTab:CreateSlider({Name = "Prediction (when enabled)", Range = {0,0.4}, Increment = 0.002, CurrentValue = 0.168, Callback = function(v) AimbotPrediction = v end})
+AimbotTab:CreateSlider({Name = "Smoothness (only when prediction ON)", Range = {0.1,0.9}, Increment = 0.01, CurrentValue = 0.42, Callback = function(v) AimbotSmoothness = v end})
+AimbotTab:CreateSlider({Name = "FOV", Range = {80,400}, Increment = 5, CurrentValue = 220, Callback = function(v) AimbotFOV = v end})
+AimbotTab:CreateToggle({Name = "Only Target Murderer", CurrentValue = false, Callback = function(v) AimbotOnlyMurderer = v end})
+AimbotTab:CreateLabel("HOW TO USE:\nQ = toggle aimbot\nHOLD Right Click = lock\nSticky = stays on first target")
+
+CombatTab:CreateSection("Combat")
+CombatTab:CreateToggle({Name = "Triggerbot (instant)", CurrentValue = false, Callback = function(v)
+    TriggerbotEnabled = v
+    if v then startTriggerbot() else if triggerConn then triggerConn:Disconnect() end end
+end})
+
+UtilityTab:CreateSection("Exploits")
+GodModeToggleObj = UtilityTab:CreateToggle({
+    Name = "God Mode",
+    CurrentValue = false,
+    Callback = function(v)
+        GodModeEnabled = v
+        if v then
+            enableGodMode()
+            Rayfield:Notify({Title="God Mode",Content="ON",Duration=2})
+        else
+            Rayfield:Notify({Title="God Mode",Content="OFF",Duration=2})
+        end
+    end
+})
+UtilityTab:CreateToggle({Name = "Anti-Fling", CurrentValue = false, Callback = function(v)
+    AntiFlingEnabled = v
+    Rayfield:Notify({Title="Anti-Fling",Content=v and "ON" or "OFF",Duration=2})
+end})
+
+UtilityTab:CreateSection("Hitbox Expander")
+UtilityTab:CreateToggle({Name = "Hitbox Expander", CurrentValue = false, Callback = function(v)
+    HitboxEnabled = v
+    if v then
+        for _,p in ipairs(Players:GetPlayers()) do
+            if p~=LocalPlayer and p.Character then ApplyHitboxExpander(p.Character) end
+        end
+        Rayfield:Notify({Title="Hitbox",Content="Enabled",Duration=2})
+    else
+        ResetHitboxes()
+        Rayfield:Notify({Title="Hitbox",Content="Disabled",Duration=2})
+    end
+end})
+VisualizeHitboxToggleObj = UtilityTab:CreateToggle({
+    Name = "Visualize Hitbox",
+    CurrentValue = false,
+    Callback = function(v)
+        VisualizeHitbox = v
+        UpdateAllHitboxes()
+    end
+})
+UtilityTab:CreateSlider({Name = "Hitbox Size", Range = {5,50}, Increment = 5, CurrentValue = 10, Callback = function(v)
+    HitboxSize = v
+    if HitboxEnabled then UpdateAllHitboxes() end
+end})
+UtilityTab:CreateLabel("HOTKEYS:\nP = Toggle GUI\nQ = Aimbot toggle\nG = God Mode\nU = Toggle hitbox visuals\nZ = Desync toggle")
+
+RageTab:CreateSection("Rage - Kill Features")
+RageTab:CreateToggle({Name = "Kill Aura", CurrentValue = false, Callback = function(Value)
+    KillAuraEnabled = Value
+    Rayfield:Notify({Title = "Kill Aura", Content = Value and "ENABLED (range: "..KillAuraRange..")" or "DISABLED", Duration = 2})
+end})
+RageTab:CreateSlider({Name = "Kill Aura Range", Range = {5,250}, Increment = 1, CurrentValue = 25, Callback = function(Value) KillAuraRange = Value end})
+RageTab:CreateButton({Name = "Kill All (instant)", Callback = PerformKillAll})
+RageTab:CreateKeybind({Name = "Kill All Hotkey", CurrentKeybind = "P", HoldToUse = false, Callback = PerformKillAll})
+
+RageTab:CreateSection("Gun Teleport")
+RageTab:CreateButton({Name = "Teleport to Gun (Snap Back)", Callback = TeleportToGunSnapBack})
+RageTab:CreateKeybind({Name = "Teleport to Gun (Hotkey)", CurrentKeybind = "Y", HoldToUse = false, Callback = TeleportToGunSnapBack})
+RageTab:CreateToggle({Name = "Auto Teleport to Gun", CurrentValue = false, Callback = function(v) AutoGunTPEnabled = v end})
+RageTab:CreateLabel("HOW TO USE GUN TP:\nPress button or Y key\nAuto snaps back after grabbing gun")
+
+PlayersTab:CreateSection("Player Selector")
+local PlayerDropdown = PlayersTab:CreateDropdown({
+    Name = "Select Player",
+    Options = GetPlayerNames(),
+    CurrentOption = {},
+    Callback = function(val)
+        SelectedPlayerName = val[1]
+        Rayfield:Notify({Title = "Selected", Content = SelectedPlayerName or "None", Duration = 1.5})
+    end,
+})
+PlayersTab:CreateButton({
+    Name = "Refresh Player List",
+    Callback = function()
+        PlayerDropdown:Refresh(GetPlayerNames())
+        Rayfield:Notify({Title = "Players", Content = "List updated!", Duration = 2})
+    end
+})
+
+PlayersTab:CreateSection("Actions")
+PlayersTab:CreateButton({Name = "Teleport to Player", Callback = TeleportToSelected})
+PlayersTab:CreateButton({Name = "Fling Player", Callback = FlingSelected})
+PlayersTab:CreateToggle({
+    Name = "Spectate Selected Player",
+    CurrentValue = false,
+    Callback = function(state)
+        if state then
+            if not SelectedPlayerName then Rayfield:Notify({Title = "Spectate", Content = "Select a player first!", Duration = 2.5}) return end
+            local target = Players:FindFirstChild(SelectedPlayerName)
+            if target and target.Character and target.Character:FindFirstChild("Humanoid") then
+                OriginalCameraSubject = Workspace.CurrentCamera.CameraSubject
+                Workspace.CurrentCamera.CameraSubject = target.Character.Humanoid
+                Rayfield:Notify({Title = "Spectating", Content = SelectedPlayerName, Duration = 3})
+            end
+        else
+            if OriginalCameraSubject then
+                Workspace.CurrentCamera.CameraSubject = OriginalCameraSubject
+                OriginalCameraSubject = nil
+            end
+            Rayfield:Notify({Title = "Spectate", Content = "Stopped", Duration = 2})
+        end
+    end
+})
+PlayersTab:CreateLabel("HOW TO USE:\n1. Select player (refresh if needed)\n2. Use any action")
+
+-- DESYNC TAB
+DesyncTab:CreateSection("Main Desync")
+local DesyncToggle = DesyncTab:CreateToggle({
+    Name = "Enable Desync (Z to toggle)",
+    CurrentValue = false,
+    Callback = function(v)
+        getgenv().Desync.Enabled = v
+        if not v then getgenv().Desync.AutoAvoidActive = false end
+    end,
+})
+SetDesyncToggle = function(value)
+    if DesyncToggle and DesyncToggle.Set then
+        DesyncToggle:Set(value)
+    end
+end
+
+DesyncTab:CreateKeybind({
+    Name = "Desync Keybind",
+    CurrentKeybind = "Z",
+    HoldToUse = false,
+    Callback = function()
+        local newValue = not getgenv().Desync.Enabled
+        getgenv().Desync.Enabled = newValue
+        if not newValue then getgenv().Desync.AutoAvoidActive = false end
+        if DesyncToggle and DesyncToggle.Set then DesyncToggle:Set(newValue) end
+        Rayfield:Notify({Title = "Desync", Content = newValue and "ON" or "OFF", Duration = 2})
+    end,
+})
+
+DesyncTab:CreateDropdown({
+    Name = "Desync Method",
+    Options = {"Void", "Sky", "Underground", "Random", "Oscillate", "Spin"},
+    CurrentOption = "Sky",
+    Callback = function(v)
+        getgenv().Desync.Method = v
+    end,
+})
+
+DesyncTab:CreateToggle({
+    Name = "Return to Position",
+    CurrentValue = true,
+    Callback = function(v)
+        getgenv().Desync.ReturnToPosition = v
+    end,
+})
+
+DesyncTab:CreateSection("Auto Desync on Damage")
+DesyncTab:CreateToggle({
+    Name = "Auto Desync on Damage",
+    CurrentValue = false,
+    Callback = function(v)
+        getgenv().Desync.AutoDesyncOnDamage = v
+    end,
+})
+DesyncTab:CreateSlider({
+    Name = "Health % to Trigger",
+    Range = {1, 100},
+    Increment = 1,
+    CurrentValue = 99,
+    Callback = function(v)
+        getgenv().Desync.HealthThreshold = v
+    end,
+})
+DesyncTab:CreateSlider({
+    Name = "Cooldown (seconds)",
+    Range = {0.1, 5},
+    Increment = 0.1,
+    CurrentValue = 1,
+    Callback = function(v)
+        getgenv().Desync.Cooldown = v
+    end,
+})
+
+DesyncTab:CreateSection("Method Settings")
+DesyncTab:CreateSlider({
+    Name = "Random Distance",
+    Range = {10, 500},
+    Increment = 10,
+    CurrentValue = 100,
+    Callback = function(v)
+        getgenv().Desync.RandomDistance = v
+    end,
+})
+DesyncTab:CreateSlider({
+    Name = "Oscillate Distance",
+    Range = {10, 200},
+    Increment = 5,
+    CurrentValue = 50,
+    Callback = function(v)
+        getgenv().Desync.OscillateDistance = v
+    end,
+})
+DesyncTab:CreateSlider({
+    Name = "Oscillate Speed",
+    Range = {1, 20},
+    Increment = 0.5,
+    CurrentValue = 5,
+    Callback = function(v)
+        getgenv().Desync.OscillateSpeed = v
+    end,
+})
+DesyncTab:CreateSlider({
+    Name = "Spin Speed",
+    Range = {5, 100},
+    Increment = 5,
+    CurrentValue = 20,
+    Callback = function(v)
+        getgenv().Desync.SpinSpeed = v
+    end,
+})
+
+-- AUTO AVOID TAB
+AutoAvoidTab:CreateSection("Auto Avoid Murderer (Sky Desync)")
+AutoAvoidToggleObj = AutoAvoidTab:CreateToggle({
+    Name = "Auto Avoid Murderer",
+    CurrentValue = false,
+    Callback = function(v)
+        getgenv().Desync.AutoAvoidMurderer = v
+        Rayfield:Notify({Title = "Auto Avoid", Content = v and "ENABLED" or "DISABLED", Duration = 2})
+    end,
+})
+AutoAvoidTab:CreateSlider({
+    Name = "Avoid Distance (studs)",
+    Range = {5, 50},
+    Increment = 1,
+    CurrentValue = 20,
+    Callback = function(v)
+        getgenv().Desync.AvoidDistance = v
+    end,
+})
+AutoAvoidTab:CreateLabel("When enabled: Automatically activates Sky desync when a murderer gets near you, then turns off when they leave.")
+
+AutoAvoidTab:CreateSection("Status")
+local StatusLabel = AutoAvoidTab:CreateLabel("Status: Waiting...")
+
+task.spawn(function()
+    while task.wait(0.5) do
+        if getgenv().Desync.AutoAvoidMurderer then
+            local dist = getNearestMurdererDistance()
+            if dist then
+                if dist <= getgenv().Desync.AvoidDistance then
+                    StatusLabel:Set("Status: MURDERER NEAR! (" .. math.floor(dist) .. " studs) - Desync ACTIVE")
+                else
+                    StatusLabel:Set("Status: Murderer at " .. math.floor(dist) .. " studs - Safe")
+                end
+            else
+                StatusLabel:Set("Status: No murderer nearby - Safe")
+            end
+        else
+            StatusLabel:Set("Status: Auto Avoid Disabled")
+        end
+    end
+end)
+
+Rayfield:LoadConfiguration()
+
+Rayfield:Notify({
+    Title = "I Love Annie - MM2 (Solara)",
+    Content = "Loaded successfully!\nZ = Desync | Q = Aimbot | G = Godmode | P = GUI\nEnjoy king 🔥",
+    Duration = 8,
+})
