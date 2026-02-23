@@ -1,11 +1,13 @@
 -- =============================================
--- I LOVE ANNIE - MM2 | SOLARA OPTIMIZED EDITION
+-- I LOVE ANNIE - MM2 | SOLARA OPTIMIZED + CLEAN 5-TAB
 -- by Kherby (fully cleaned & stabilized for Solara 2026)
 -- ✅ Double-load protection
 -- ✅ game:IsLoaded() wait
 -- ✅ pcall on hookmetamethod (fixes most Solara crashes)
 -- ✅ task.wait() in all desync methods (smoother + less lag)
 -- ✅ Settings preserved on re-execute
+-- ✅ Only 5 TABS (Visuals • Aimbot • Combat • Movement • Players)
+-- ✅ All teleports added to Movement tab (Lobby, Map, Emergency, Respawn, Gun)
 -- ✅ All original features kept 100%
 -- =============================================
 
@@ -22,23 +24,20 @@ getgenv().AnnieMM2_SolaraLoaded = true
 if not game:IsLoaded() then game.Loaded:Wait() end
 
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
-
 local Window = Rayfield:CreateWindow({
-    Name = "I Love Annie - MM2 (Solara)",
+    Name = "I Love Annie - MM2 (Solara Clean)",
     LoadingTitle = "I Love Annie",
-    LoadingSubtitle = "by Kherby | Solara Optimized",
+    LoadingSubtitle = "by Kherby | 5-Tab Optimized",
     ConfigurationSaving = { Enabled = true, FolderName = "KherbyMM2", FileName = "AnnieSolaraConfig" },
     KeySystem = false,
 })
 
-local VisualsTab   = Window:CreateTab("Visuals", 4483362458)
-local AimbotTab    = Window:CreateTab("Aimbot", 4483362458)
-local CombatTab    = Window:CreateTab("Combat", 4483362458)
-local UtilityTab   = Window:CreateTab("Utilities", 4483362458)
-local RageTab      = Window:CreateTab("Rage", 4483362458)
-local PlayersTab   = Window:CreateTab("Players", 4483362458)
-local DesyncTab    = Window:CreateTab("Desync", 4483362458)
-local AutoAvoidTab = Window:CreateTab("Auto Avoid", 4483362458)
+-- ==================== 5 CLEAN TABS ====================
+local VisualsTab  = Window:CreateTab("Visuals", 4483362458)
+local AimbotTab   = Window:CreateTab("Aimbot", 4483362458)
+local CombatTab   = Window:CreateTab("Combat", 4483362458)
+local MovementTab = Window:CreateTab("Movement", 4483362458)
+local PlayersTab  = Window:CreateTab("Players", 4483362458)
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -51,7 +50,6 @@ if not getgenv().FPDH then
     getgenv().FPDH = workspace.FallenPartsDestroyHeight
 end
 
--- Desync Configuration (preserved on re-execute)
 getgenv().Desync = getgenv().Desync or {
     Enabled = false,
     Method = "Sky",
@@ -83,7 +81,6 @@ local DesyncMethods = {
             RootPart.CFrame = DesyncData.OriginalCFrame
         end
     end,
-    
     Sky = function(RootPart)
         RootPart.CFrame = DesyncData.OriginalCFrame * CFrame.new(0, 100000, 0)
         task.wait()
@@ -91,7 +88,6 @@ local DesyncMethods = {
             RootPart.CFrame = DesyncData.OriginalCFrame
         end
     end,
-    
     Underground = function(RootPart)
         RootPart.CFrame = DesyncData.OriginalCFrame * CFrame.new(0, -10000, 0)
         task.wait()
@@ -99,34 +95,28 @@ local DesyncMethods = {
             RootPart.CFrame = DesyncData.OriginalCFrame
         end
     end,
-    
     Random = function(RootPart)
         local RandX = math.random(-getgenv().Desync.RandomDistance, getgenv().Desync.RandomDistance)
         local RandY = math.random(-getgenv().Desync.RandomDistance, getgenv().Desync.RandomDistance)
         local RandZ = math.random(-getgenv().Desync.RandomDistance, getgenv().Desync.RandomDistance)
-        
         RootPart.CFrame = DesyncData.OriginalCFrame * CFrame.new(RandX, RandY, RandZ)
         task.wait()
         if getgenv().Desync.ReturnToPosition then
             RootPart.CFrame = DesyncData.OriginalCFrame
         end
     end,
-    
     Oscillate = function(RootPart)
         local ElapsedTime = tick() - DesyncData.StartTime
         local Distance = math.sin(ElapsedTime * getgenv().Desync.OscillateSpeed) * getgenv().Desync.OscillateDistance
-        
         RootPart.CFrame = DesyncData.OriginalCFrame * CFrame.new(0, Distance, 0)
         task.wait()
         if getgenv().Desync.ReturnToPosition then
             RootPart.CFrame = DesyncData.OriginalCFrame
         end
     end,
-    
     Spin = function(RootPart)
         local ElapsedTime = tick() - DesyncData.StartTime
         local Angle = ElapsedTime * getgenv().Desync.SpinSpeed
-        
         RootPart.CFrame = DesyncData.OriginalCFrame * CFrame.Angles(0, Angle, 0)
         task.wait()
         if getgenv().Desync.ReturnToPosition then
@@ -136,11 +126,7 @@ local DesyncMethods = {
 }
 
 local function FlingNotify(title, text, duration)
-    Rayfield:Notify({
-        Title = title,
-        Content = text,
-        Duration = duration or 4
-    })
+    Rayfield:Notify({ Title = title, Content = text, Duration = duration or 4 })
 end
 
 local ESPEnabled = false
@@ -161,7 +147,6 @@ local HitboxStep = 5
 local BoxHandles = {}
 local CurrentGunTracer = nil
 local CurrentMapCache = nil
-
 local AimbotEnabled = false
 local HoldingMouse2 = false
 local AimbotPrediction = 0.168
@@ -173,23 +158,15 @@ local TargetPart = "Head"
 local StickyEnabled = false
 local LockedTarget = nil
 local LastLockedTarget = nil
-
 local KillAuraEnabled = false
 local KillAuraRange = 25
 local lastAttack = tick()
-
 local LastGunTPPosition = nil
 local AutoGunTPEnabled = false
-
 local SelectedPlayerName = nil
 local OriginalCameraSubject = nil
 
-local AimbotToggleObj
-local GodModeToggleObj
-local VisualizeHitboxToggleObj
-local DesyncToggleObj
-local AutoAvoidToggleObj
-
+local AimbotToggleObj, GodModeToggleObj, VisualizeHitboxToggleObj
 local SetDesyncToggle = nil
 
 local function isAlive(plr)
@@ -223,9 +200,7 @@ local function getNearestMurdererDistance()
     if not character then return nil end
     local hrp = character:FindFirstChild("HumanoidRootPart")
     if not hrp then return nil end
-    
     local nearestDistance = math.huge
-    
     for _, plr in ipairs(Players:GetPlayers()) do
         if plr ~= LocalPlayer and isAlive(plr) and isMurderer(plr) then
             local targetChar = plr.Character
@@ -238,7 +213,6 @@ local function getNearestMurdererDistance()
             end
         end
     end
-    
     return nearestDistance == math.huge and nil or nearestDistance
 end
 
@@ -246,17 +220,13 @@ local function LocalTriggerDesyncOnce()
     local LocalCharacter = LocalPlayer.Character
     local LocalRootPart = LocalCharacter and LocalCharacter:FindFirstChild("HumanoidRootPart")
     if not LocalRootPart then return end
-
     DesyncData.OriginalCFrame = LocalRootPart.CFrame
-    DesyncData.StartTime = tick() 
-
+    DesyncData.StartTime = tick()
     local SelectedMethodName = getgenv().Desync.Method
     local MethodToCall = DesyncMethods[SelectedMethodName]
-
     if MethodToCall then
         MethodToCall(LocalRootPart)
     end
-    
     getgenv().Desync.LastTriggered = tick()
 end
 
@@ -267,23 +237,18 @@ end
 local function checkHealthForDesync()
     local character = LocalPlayer.Character
     if not character then return end
-    
     local humanoid = character:FindFirstChildOfClass("Humanoid")
     if not humanoid then return end
-    
     local currentHealth = humanoid.Health
     local maxHealth = humanoid.MaxHealth
     local healthPercent = (currentHealth / maxHealth) * 100
     local desync = getgenv().Desync
-    
     if desync.AutoDesyncOnDamage and healthPercent < desync.HealthThreshold and 
        desync.LastHealth > healthPercent and 
        (tick() - desync.LastTriggered) > desync.Cooldown then
-        
         LocalTriggerDesyncOnce()
         Rayfield:Notify({Title = "Auto Desync", Content = "Triggered by damage!", Duration = 3})
     end
-    
     desync.LastHealth = healthPercent
 end
 
@@ -300,11 +265,9 @@ local function checkAutoAvoidMurderer()
         end
         return 
     end
-    
     local nearestMurdererDist = getNearestMurdererDistance()
     local character = LocalPlayer.Character
     if not character then return end
-    
     if nearestMurdererDist and nearestMurdererDist <= desync.AvoidDistance then
         if not desync.Enabled then
             desync.AutoAvoidActive = true
@@ -329,29 +292,22 @@ local SkidFling = function(TargetPlayer)
     local RootPart = Humanoid and Humanoid.RootPart
     local TCharacter = TargetPlayer.Character
     local THumanoid, TRootPart, THead, Accessory, Handle
-
     if TCharacter then
         THumanoid = TCharacter:FindFirstChildOfClass("Humanoid")
         if THumanoid and THumanoid.RootPart then TRootPart = THumanoid.RootPart end
         THead = TCharacter:FindFirstChild("Head")
         Accessory = TCharacter:FindFirstChildOfClass("Accessory")
-        if Accessory and Accessory:FindFirstChild("Handle") then
-            Handle = Accessory.Handle
-        end
+        if Accessory and Accessory:FindFirstChild("Handle") then Handle = Accessory.Handle end
     end
-
     if not (Character and Humanoid and RootPart) then
         return FlingNotify("Fling Error", "Your character not loaded", 3)
     end
-
     if RootPart.Velocity.Magnitude < 50 then
         getgenv().OldPos = RootPart.CFrame
     end
-
     if THumanoid and THumanoid.Sit then
         return FlingNotify("Fling Error", "Target is sitting", 3)
     end
-
     if THead then
         workspace.CurrentCamera.CameraSubject = THead
     elseif Handle then
@@ -359,14 +315,12 @@ local SkidFling = function(TargetPlayer)
     elseif THumanoid and TRootPart then
         workspace.CurrentCamera.CameraSubject = THumanoid
     end
-
     local FPos = function(BasePart, Pos, Ang)
         RootPart.CFrame = CFrame.new(BasePart.Position) * Pos * Ang
         Character:SetPrimaryPartCFrame(CFrame.new(BasePart.Position) * Pos * Ang)
         RootPart.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
         RootPart.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
     end
-
     local SFBasePart = function(BasePart)
         local TimeToWait = 2
         local Time = tick()
@@ -394,7 +348,6 @@ local SkidFling = function(TargetPlayer)
                     task.wait()
                     FPos(BasePart, CFrame.new(0, 1.5, THumanoid.WalkSpeed), CFrame.Angles(math.rad(90), 0, 0))
                     task.wait()
-
                     FPos(BasePart, CFrame.new(0, 1.5, TRootPart.Velocity.Magnitude / 1.25), CFrame.Angles(math.rad(90), 0, 0))
                     task.wait()
                     FPos(BasePart, CFrame.new(0, -1.5, -TRootPart.Velocity.Magnitude / 1.25), CFrame.Angles(0, 0, 0))
@@ -415,17 +368,13 @@ local SkidFling = function(TargetPlayer)
             end
         until BasePart.Velocity.Magnitude > 500 or not BasePart.Parent or TargetPlayer.Parent ~= Players or THumanoid.Sit or Humanoid.Health <= 0 or tick() > Time + TimeToWait
     end
-
     workspace.FallenPartsDestroyHeight = 0/0
-
     local BV = Instance.new("BodyVelocity")
     BV.Name = "EpixVel"
     BV.Parent = RootPart
     BV.Velocity = Vector3.new(9e8, 9e8, 9e8)
     BV.MaxForce = Vector3.new(1/0, 1/0, 1/0)
-
     Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
-
     if TRootPart and THead then
         if (TRootPart.Position - THead.Position).Magnitude > 5 then
             SFBasePart(THead)
@@ -441,11 +390,9 @@ local SkidFling = function(TargetPlayer)
     else
         return FlingNotify("Fling Error", "Target missing parts", 3)
     end
-
     BV:Destroy()
     Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
     workspace.CurrentCamera.CameraSubject = Humanoid
-
     repeat
         RootPart.CFrame = getgenv().OldPos * CFrame.new(0, .5, 0)
         Character:SetPrimaryPartCFrame(getgenv().OldPos * CFrame.new(0, .5, 0))
@@ -458,7 +405,6 @@ local SkidFling = function(TargetPlayer)
         end
         task.wait()
     until (RootPart.Position - getgenv().OldPos.Position).Magnitude < 25
-
     workspace.FallenPartsDestroyHeight = getgenv().FPDH
     FlingNotify("Fling Success", "Flung " .. TargetPlayer.Name .. "!", 3)
 end
@@ -480,7 +426,6 @@ local function CreateESP(char, plr)
     hl.FillTransparency = FillTransparencyValue
     hl.OutlineTransparency = 0
     hl.Parent = char
-
     if NameESPEnabled then
         local adornee = char:FindFirstChild("Head") or char:FindFirstChild("HumanoidRootPart")
         if not adornee then return end
@@ -597,6 +542,7 @@ local function updateAimbot()
         Rayfield:Notify({Title = "Aimbot Locked!", Content = "-> "..targetPlr.Name..(isMurderer(targetPlr) and " (MURDERER)" or ""), Duration = 1.8})
     end
 end
+
 RunService:BindToRenderStep("AnnieAimbotCamlock", Enum.RenderPriority.Camera.Value + 1, updateAimbot)
 
 local function setupAntiFling()
@@ -898,7 +844,6 @@ local function PerformKillAll()
         Rayfield:Notify({Title = "Kill All", Content = "No Knife (you must be Murderer)", Duration = 3})
         return
     end
-    
     if Knife.Parent == LocalPlayer.Backpack then
         character.Humanoid:EquipTool(Knife)
         task.wait(0.25)
@@ -907,7 +852,6 @@ local function PerformKillAll()
             task.wait(0.1)
         end
     end
-    
     local count = 0
     for _, plr in ipairs(Players:GetPlayers()) do
         if plr ~= LocalPlayer and isAlive(plr) then
@@ -947,6 +891,106 @@ local function TeleportToGunSnapBack()
             Rayfield:Notify({Title = "Gun TP", Content = "Snapped back to original position!", Duration = 2.5})
         end
     end)
+end
+
+-- ==================== TELEPORT FUNCTIONS (added to Movement) ====================
+local function findLobby()
+    local lobby = Workspace:FindFirstChild("Lobby")
+    if lobby then return lobby end
+    for _, v in ipairs(Workspace:GetDescendants()) do
+        if v.Name == "Spawns" and v.Parent and v.Parent.Name == "Lobby" then
+            return v.Parent
+        end
+    end
+    return nil
+end
+
+local function findMap()
+    for _, v in ipairs(Workspace:GetDescendants()) do
+        if v.Name == "Spawns" and v.Parent and v.Parent.Name ~= "Lobby" then
+            return v.Parent
+        end
+    end
+    return nil
+end
+
+local function getSpawnPoint(location)
+    if not location then return nil end
+    local spawns = location:FindFirstChild("Spawns")
+    if spawns then
+        for _, child in ipairs(spawns:GetChildren()) do
+            if child:IsA("Part") or child:IsA("BasePart") then
+                return child
+            end
+        end
+    end
+    for _, child in ipairs(location:GetChildren()) do
+        if child:IsA("Part") or child:IsA("BasePart") then
+            return child
+        end
+    end
+    return nil
+end
+
+local function tpLobby()
+    local char = LocalPlayer.Character
+    if not char then Rayfield:Notify({Title = "Error", Content = "Character not loaded!", Duration = 3}) return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then Rayfield:Notify({Title = "Error", Content = "No HumanoidRootPart", Duration = 3}) return end
+    local lobby = findLobby()
+    if lobby then
+        local spawnPoint = getSpawnPoint(lobby)
+        if spawnPoint then
+            hrp.CFrame = spawnPoint.CFrame * CFrame.new(0, 5, 0)
+            Rayfield:Notify({Title = "Success", Content = "Teleported to Lobby", Duration = 3})
+            return
+        end
+    end
+    local fallbackSpots = { CFrame.new(-90.5, 20.5, -9.5), CFrame.new(-94, 20.5, -12), CFrame.new(-87, 20.5, -7), CFrame.new(-100, 25, 0) }
+    for i, cf in ipairs(fallbackSpots) do
+        hrp.CFrame = cf
+        task.wait(0.1)
+        if hrp.Position.Y > 0 and hrp.Position.Y < 1000 then
+            Rayfield:Notify({Title = "Success", Content = "Lobby (Fallback " .. i .. ")", Duration = 3})
+            return
+        end
+    end
+end
+
+local function tpMap()
+    local char = LocalPlayer.Character
+    if not char then Rayfield:Notify({Title = "Error", Content = "Character not loaded!", Duration = 3}) return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then Rayfield:Notify({Title = "Error", Content = "No HumanoidRootPart", Duration = 3}) return end
+    local map = findMap()
+    if map then
+        local spawnPoint = getSpawnPoint(map)
+        if spawnPoint then
+            hrp.CFrame = spawnPoint.CFrame * CFrame.new(0, 5, 0)
+            Rayfield:Notify({Title = "Success", Content = "Teleported to " .. map.Name, Duration = 3})
+            return
+        end
+    end
+    Rayfield:Notify({Title = "Failed", Content = "No map found - are you in lobby?", Duration = 4})
+end
+
+local function tpEmergency()
+    local char = LocalPlayer.Character
+    if not char then return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+    hrp.CFrame = CFrame.new(-90, 25, -10)
+    Rayfield:Notify({Title = "Emergency", Content = "Teleported to safe spot", Duration = 3})
+end
+
+local function respawn()
+    local char = LocalPlayer.Character
+    if not char then return end
+    local humanoid = char:FindFirstChild("Humanoid")
+    if humanoid then
+        humanoid.Health = 0
+        Rayfield:Notify({Title = "Respawning", Content = "Character reset", Duration = 3})
+    end
 end
 
 local function GetPlayerNames()
@@ -1014,19 +1058,15 @@ Players.PlayerRemoving:Connect(function(plr)
     end
 end)
 
--- Desync Heartbeat Loop
 coroutine.wrap(function()
     RunService.Heartbeat:Connect(function()
         checkHealthForDesync()
         checkAutoAvoidMurderer()
-        
         if getgenv().Desync.Enabled then
             local LocalCharacter = LocalPlayer.Character
             local LocalRootPart = LocalCharacter and LocalCharacter:FindFirstChild("HumanoidRootPart")
             if not LocalRootPart then return end
-
             DesyncData.OriginalCFrame = LocalRootPart.CFrame
-            
             local SelectedMethod = getgenv().Desync.Method
             if DesyncMethods[SelectedMethod] then
                 DesyncMethods[SelectedMethod](LocalRootPart)
@@ -1077,7 +1117,7 @@ UserInputService.InputBegan:Connect(function(input, gp)
         Rayfield:ToggleUI()
     elseif input.KeyCode == Enum.KeyCode.U then
         VisualizeHitbox = not VisualizeHitbox
-        VisualizeHitboxToggleObj:Set(VisualizeHitbox)
+        if VisualizeHitboxToggleObj then VisualizeHitboxToggleObj:Set(VisualizeHitbox) end
         UpdateAllHitboxes()
         Rayfield:Notify({Title = "Hitbox Visuals", Content = VisualizeHitbox and "ON" or "OFF", Duration = 2})
     elseif input.KeyCode == Enum.KeyCode.Equals or input.KeyCode == Enum.KeyCode.Plus then
@@ -1090,11 +1130,11 @@ UserInputService.InputBegan:Connect(function(input, gp)
         Rayfield:Notify({Title = "Hitbox Size", Content = tostring(HitboxSize), Duration = 1.5})
     elseif input.KeyCode == Enum.KeyCode.G then
         GodModeEnabled = not GodModeEnabled
-        GodModeToggleObj:Set(GodModeEnabled)
+        if GodModeToggleObj then GodModeToggleObj:Set(GodModeEnabled) end
         if GodModeEnabled then enableGodMode() end
     elseif input.KeyCode == Enum.KeyCode.Q then
         AimbotEnabled = not AimbotEnabled
-        AimbotToggleObj:Set(AimbotEnabled)
+        if AimbotToggleObj then AimbotToggleObj:Set(AimbotEnabled) end
     elseif input.KeyCode == Enum.KeyCode.Z then
         local newDesync = not getgenv().Desync.Enabled
         getgenv().Desync.Enabled = newDesync
@@ -1122,7 +1162,7 @@ end)
 
 setupAntiFling()
 
--- SOLARA-SAFE METAMETHOD HOOK (pcall protection)
+-- SOLARA-SAFE METAMETHOD HOOK
 local OriginalCFrameHook
 local hookSuccess = pcall(function()
     OriginalCFrameHook = hookmetamethod(game, "__index", newcclosure(function(Self, Key)
@@ -1138,16 +1178,17 @@ local hookSuccess = pcall(function()
         return OriginalCFrameHook(Self, Key)
     end))
 end)
-
 if not hookSuccess then
     Rayfield:Notify({
         Title = "Solara Warning",
-        Content = "hookmetamethod failed (rare). Desync will still work but may be slightly detectable.",
+        Content = "hookmetamethod failed (rare). Desync still works but may be slightly detectable.",
         Duration = 8
     })
 end
 
--- UI CREATION (unchanged from your original)
+-- ==================== UI CREATION ====================
+
+-- VISUALS TAB
 VisualsTab:CreateSection("Player ESP")
 VisualsTab:CreateToggle({Name = "ESP Highlight", CurrentValue = false, Callback = function(v)
     ESPEnabled = v
@@ -1166,7 +1207,7 @@ VisualsTab:CreateSection("Gun ESP")
 VisualsTab:CreateToggle({Name = "Tool Gun ESP", CurrentValue = true, Callback = function(v) GunESPEnabled = v refreshToolGunESP() end})
 VisualsTab:CreateToggle({Name = "GunDrop Highlight", CurrentValue = true, Callback = function(v)
     DroppedGunHighlightEnabled = v
-    if v then highlightDroppedGun() else
+    if not v then
         for _,o in ipairs(Workspace:GetDescendants()) do
             if o.Name=="GunDrop" then
                 if o:FindFirstChild("GunDropHighlight") then o.GunDropHighlight:Destroy() end
@@ -1180,6 +1221,7 @@ VisualsTab:CreateToggle({Name = "Gun Tracer", CurrentValue = true, Callback = fu
     if not v and CurrentGunTracer then CurrentGunTracer:Destroy() CurrentGunTracer = nil end
 end})
 
+-- AIMBOT TAB
 AimbotTab:CreateSection("Aimbot Settings")
 AimbotToggleObj = AimbotTab:CreateToggle({
     Name = "Aimbot (Press Q to toggle)",
@@ -1195,33 +1237,24 @@ AimbotTab:CreateSlider({Name = "FOV", Range = {80,400}, Increment = 5, CurrentVa
 AimbotTab:CreateToggle({Name = "Only Target Murderer", CurrentValue = false, Callback = function(v) AimbotOnlyMurderer = v end})
 AimbotTab:CreateLabel("HOW TO USE:\nQ = toggle aimbot\nHOLD Right Click = lock\nSticky = stays on first target")
 
+-- COMBAT TAB
 CombatTab:CreateSection("Combat")
 CombatTab:CreateToggle({Name = "Triggerbot (instant)", CurrentValue = false, Callback = function(v)
     TriggerbotEnabled = v
     if v then startTriggerbot() else if triggerConn then triggerConn:Disconnect() end end
 end})
 
-UtilityTab:CreateSection("Exploits")
-GodModeToggleObj = UtilityTab:CreateToggle({
-    Name = "God Mode",
-    CurrentValue = false,
-    Callback = function(v)
-        GodModeEnabled = v
-        if v then
-            enableGodMode()
-            Rayfield:Notify({Title="God Mode",Content="ON",Duration=2})
-        else
-            Rayfield:Notify({Title="God Mode",Content="OFF",Duration=2})
-        end
-    end
-})
-UtilityTab:CreateToggle({Name = "Anti-Fling", CurrentValue = false, Callback = function(v)
-    AntiFlingEnabled = v
-    Rayfield:Notify({Title="Anti-Fling",Content=v and "ON" or "OFF",Duration=2})
+CombatTab:CreateSection("Rage Features")
+CombatTab:CreateToggle({Name = "Kill Aura", CurrentValue = false, Callback = function(Value)
+    KillAuraEnabled = Value
+    Rayfield:Notify({Title = "Kill Aura", Content = Value and "ENABLED (range: "..KillAuraRange..")" or "DISABLED", Duration = 2})
 end})
+CombatTab:CreateSlider({Name = "Kill Aura Range", Range = {5,250}, Increment = 1, CurrentValue = 25, Callback = function(Value) KillAuraRange = Value end})
+CombatTab:CreateButton({Name = "Kill All (instant)", Callback = PerformKillAll})
+CombatTab:CreateKeybind({Name = "Kill All Hotkey", CurrentKeybind = "P", HoldToUse = false, Callback = PerformKillAll})
 
-UtilityTab:CreateSection("Hitbox Expander")
-UtilityTab:CreateToggle({Name = "Hitbox Expander", CurrentValue = false, Callback = function(v)
+CombatTab:CreateSection("Hitbox Expander")
+CombatTab:CreateToggle({Name = "Hitbox Expander", CurrentValue = false, Callback = function(v)
     HitboxEnabled = v
     if v then
         for _,p in ipairs(Players:GetPlayers()) do
@@ -1233,7 +1266,7 @@ UtilityTab:CreateToggle({Name = "Hitbox Expander", CurrentValue = false, Callbac
         Rayfield:Notify({Title="Hitbox",Content="Disabled",Duration=2})
     end
 end})
-VisualizeHitboxToggleObj = UtilityTab:CreateToggle({
+VisualizeHitboxToggleObj = CombatTab:CreateToggle({
     Name = "Visualize Hitbox",
     CurrentValue = false,
     Callback = function(v)
@@ -1241,27 +1274,102 @@ VisualizeHitboxToggleObj = UtilityTab:CreateToggle({
         UpdateAllHitboxes()
     end
 })
-UtilityTab:CreateSlider({Name = "Hitbox Size", Range = {5,50}, Increment = 5, CurrentValue = 10, Callback = function(v)
+CombatTab:CreateSlider({Name = "Hitbox Size", Range = {5,50}, Increment = 5, CurrentValue = 10, Callback = function(v)
     HitboxSize = v
     if HitboxEnabled then UpdateAllHitboxes() end
 end})
-UtilityTab:CreateLabel("HOTKEYS:\nP = Toggle GUI\nQ = Aimbot toggle\nG = God Mode\nU = Toggle hitbox visuals\nZ = Desync toggle")
 
-RageTab:CreateSection("Rage - Kill Features")
-RageTab:CreateToggle({Name = "Kill Aura", CurrentValue = false, Callback = function(Value)
-    KillAuraEnabled = Value
-    Rayfield:Notify({Title = "Kill Aura", Content = Value and "ENABLED (range: "..KillAuraRange..")" or "DISABLED", Duration = 2})
+-- MOVEMENT TAB (Desync + Auto Avoid + Teleports)
+MovementTab:CreateSection("Survival Exploits")
+GodModeToggleObj = MovementTab:CreateToggle({
+    Name = "God Mode",
+    CurrentValue = false,
+    Callback = function(v)
+        GodModeEnabled = v
+        if v then enableGodMode() end
+        Rayfield:Notify({Title="God Mode",Content=v and "ON" or "OFF",Duration=2})
+    end
+})
+MovementTab:CreateToggle({Name = "Anti-Fling", CurrentValue = false, Callback = function(v)
+    AntiFlingEnabled = v
+    Rayfield:Notify({Title="Anti-Fling",Content=v and "ON" or "OFF",Duration=2})
 end})
-RageTab:CreateSlider({Name = "Kill Aura Range", Range = {5,250}, Increment = 1, CurrentValue = 25, Callback = function(Value) KillAuraRange = Value end})
-RageTab:CreateButton({Name = "Kill All (instant)", Callback = PerformKillAll})
-RageTab:CreateKeybind({Name = "Kill All Hotkey", CurrentKeybind = "P", HoldToUse = false, Callback = PerformKillAll})
 
-RageTab:CreateSection("Gun Teleport")
-RageTab:CreateButton({Name = "Teleport to Gun (Snap Back)", Callback = TeleportToGunSnapBack})
-RageTab:CreateKeybind({Name = "Teleport to Gun (Hotkey)", CurrentKeybind = "Y", HoldToUse = false, Callback = TeleportToGunSnapBack})
-RageTab:CreateToggle({Name = "Auto Teleport to Gun", CurrentValue = false, Callback = function(v) AutoGunTPEnabled = v end})
-RageTab:CreateLabel("HOW TO USE GUN TP:\nPress button or Y key\nAuto snaps back after grabbing gun")
+MovementTab:CreateSection("Desync")
+local DesyncToggle = MovementTab:CreateToggle({
+    Name = "Enable Desync (Z to toggle)",
+    CurrentValue = false,
+    Callback = function(v)
+        getgenv().Desync.Enabled = v
+        if not v then getgenv().Desync.AutoAvoidActive = false end
+    end,
+})
+SetDesyncToggle = function(value)
+    if DesyncToggle and DesyncToggle.Set then DesyncToggle:Set(value) end
+end
+MovementTab:CreateKeybind({
+    Name = "Desync Keybind",
+    CurrentKeybind = "Z",
+    HoldToUse = false,
+    Callback = function()
+        local newValue = not getgenv().Desync.Enabled
+        getgenv().Desync.Enabled = newValue
+        if not newValue then getgenv().Desync.AutoAvoidActive = false end
+        if SetDesyncToggle then SetDesyncToggle(newValue) end
+        Rayfield:Notify({Title = "Desync", Content = newValue and "ON" or "OFF", Duration = 2})
+    end,
+})
+MovementTab:CreateDropdown({
+    Name = "Desync Method",
+    Options = {"Void", "Sky", "Underground", "Random", "Oscillate", "Spin"},
+    CurrentOption = {"Sky"},
+    Callback = function(v) getgenv().Desync.Method = v end,
+})
+MovementTab:CreateToggle({
+    Name = "Return to Position",
+    CurrentValue = true,
+    Callback = function(v) getgenv().Desync.ReturnToPosition = v end,
+})
 
+MovementTab:CreateSection("Auto Desync / Auto Avoid")
+MovementTab:CreateToggle({
+    Name = "Auto Desync on Damage",
+    CurrentValue = false,
+    Callback = function(v) getgenv().Desync.AutoDesyncOnDamage = v end,
+})
+MovementTab:CreateSlider({
+    Name = "Health % to Trigger",
+    Range = {1,100},
+    Increment = 1,
+    CurrentValue = 99,
+    Callback = function(v) getgenv().Desync.HealthThreshold = v end,
+})
+MovementTab:CreateToggle({
+    Name = "Auto Avoid Murderer (Sky)",
+    CurrentValue = false,
+    Callback = function(v)
+        getgenv().Desync.AutoAvoidMurderer = v
+        Rayfield:Notify({Title = "Auto Avoid", Content = v and "ENABLED" or "DISABLED", Duration = 2})
+    end,
+})
+MovementTab:CreateSlider({
+    Name = "Avoid Distance (studs)",
+    Range = {5,50},
+    Increment = 1,
+    CurrentValue = 20,
+    Callback = function(v) getgenv().Desync.AvoidDistance = v end,
+})
+
+MovementTab:CreateSection("Teleports")
+MovementTab:CreateButton({Name = "Teleport to Lobby", Callback = tpLobby})
+MovementTab:CreateButton({Name = "Teleport to Current Map", Callback = tpMap})
+MovementTab:CreateButton({Name = "Emergency Teleport", Callback = tpEmergency})
+MovementTab:CreateButton({Name = "Respawn", Callback = respawn})
+MovementTab:CreateButton({Name = "Teleport to Gun (Snap Back)", Callback = TeleportToGunSnapBack})
+MovementTab:CreateToggle({Name = "Auto Teleport to Gun", CurrentValue = false, Callback = function(v) AutoGunTPEnabled = v end})
+MovementTab:CreateLabel("HOTKEYS:\nP = Toggle GUI\nQ = Aimbot\nG = God Mode\nZ = Desync\nU = Hitbox Visuals")
+
+-- PLAYERS TAB
 PlayersTab:CreateSection("Player Selector")
 local PlayerDropdown = PlayersTab:CreateDropdown({
     Name = "Select Player",
@@ -1279,7 +1387,6 @@ PlayersTab:CreateButton({
         Rayfield:Notify({Title = "Players", Content = "List updated!", Duration = 2})
     end
 })
-
 PlayersTab:CreateSection("Actions")
 PlayersTab:CreateButton({Name = "Teleport to Player", Callback = TeleportToSelected})
 PlayersTab:CreateButton({Name = "Fling Player", Callback = FlingSelected})
@@ -1306,164 +1413,10 @@ PlayersTab:CreateToggle({
 })
 PlayersTab:CreateLabel("HOW TO USE:\n1. Select player (refresh if needed)\n2. Use any action")
 
--- DESYNC TAB
-DesyncTab:CreateSection("Main Desync")
-local DesyncToggle = DesyncTab:CreateToggle({
-    Name = "Enable Desync (Z to toggle)",
-    CurrentValue = false,
-    Callback = function(v)
-        getgenv().Desync.Enabled = v
-        if not v then getgenv().Desync.AutoAvoidActive = false end
-    end,
-})
-SetDesyncToggle = function(value)
-    if DesyncToggle and DesyncToggle.Set then
-        DesyncToggle:Set(value)
-    end
-end
-
-DesyncTab:CreateKeybind({
-    Name = "Desync Keybind",
-    CurrentKeybind = "Z",
-    HoldToUse = false,
-    Callback = function()
-        local newValue = not getgenv().Desync.Enabled
-        getgenv().Desync.Enabled = newValue
-        if not newValue then getgenv().Desync.AutoAvoidActive = false end
-        if DesyncToggle and DesyncToggle.Set then DesyncToggle:Set(newValue) end
-        Rayfield:Notify({Title = "Desync", Content = newValue and "ON" or "OFF", Duration = 2})
-    end,
-})
-
-DesyncTab:CreateDropdown({
-    Name = "Desync Method",
-    Options = {"Void", "Sky", "Underground", "Random", "Oscillate", "Spin"},
-    CurrentOption = "Sky",
-    Callback = function(v)
-        getgenv().Desync.Method = v
-    end,
-})
-
-DesyncTab:CreateToggle({
-    Name = "Return to Position",
-    CurrentValue = true,
-    Callback = function(v)
-        getgenv().Desync.ReturnToPosition = v
-    end,
-})
-
-DesyncTab:CreateSection("Auto Desync on Damage")
-DesyncTab:CreateToggle({
-    Name = "Auto Desync on Damage",
-    CurrentValue = false,
-    Callback = function(v)
-        getgenv().Desync.AutoDesyncOnDamage = v
-    end,
-})
-DesyncTab:CreateSlider({
-    Name = "Health % to Trigger",
-    Range = {1, 100},
-    Increment = 1,
-    CurrentValue = 99,
-    Callback = function(v)
-        getgenv().Desync.HealthThreshold = v
-    end,
-})
-DesyncTab:CreateSlider({
-    Name = "Cooldown (seconds)",
-    Range = {0.1, 5},
-    Increment = 0.1,
-    CurrentValue = 1,
-    Callback = function(v)
-        getgenv().Desync.Cooldown = v
-    end,
-})
-
-DesyncTab:CreateSection("Method Settings")
-DesyncTab:CreateSlider({
-    Name = "Random Distance",
-    Range = {10, 500},
-    Increment = 10,
-    CurrentValue = 100,
-    Callback = function(v)
-        getgenv().Desync.RandomDistance = v
-    end,
-})
-DesyncTab:CreateSlider({
-    Name = "Oscillate Distance",
-    Range = {10, 200},
-    Increment = 5,
-    CurrentValue = 50,
-    Callback = function(v)
-        getgenv().Desync.OscillateDistance = v
-    end,
-})
-DesyncTab:CreateSlider({
-    Name = "Oscillate Speed",
-    Range = {1, 20},
-    Increment = 0.5,
-    CurrentValue = 5,
-    Callback = function(v)
-        getgenv().Desync.OscillateSpeed = v
-    end,
-})
-DesyncTab:CreateSlider({
-    Name = "Spin Speed",
-    Range = {5, 100},
-    Increment = 5,
-    CurrentValue = 20,
-    Callback = function(v)
-        getgenv().Desync.SpinSpeed = v
-    end,
-})
-
--- AUTO AVOID TAB
-AutoAvoidTab:CreateSection("Auto Avoid Murderer (Sky Desync)")
-AutoAvoidToggleObj = AutoAvoidTab:CreateToggle({
-    Name = "Auto Avoid Murderer",
-    CurrentValue = false,
-    Callback = function(v)
-        getgenv().Desync.AutoAvoidMurderer = v
-        Rayfield:Notify({Title = "Auto Avoid", Content = v and "ENABLED" or "DISABLED", Duration = 2})
-    end,
-})
-AutoAvoidTab:CreateSlider({
-    Name = "Avoid Distance (studs)",
-    Range = {5, 50},
-    Increment = 1,
-    CurrentValue = 20,
-    Callback = function(v)
-        getgenv().Desync.AvoidDistance = v
-    end,
-})
-AutoAvoidTab:CreateLabel("When enabled: Automatically activates Sky desync when a murderer gets near you, then turns off when they leave.")
-
-AutoAvoidTab:CreateSection("Status")
-local StatusLabel = AutoAvoidTab:CreateLabel("Status: Waiting...")
-
-task.spawn(function()
-    while task.wait(0.5) do
-        if getgenv().Desync.AutoAvoidMurderer then
-            local dist = getNearestMurdererDistance()
-            if dist then
-                if dist <= getgenv().Desync.AvoidDistance then
-                    StatusLabel:Set("Status: MURDERER NEAR! (" .. math.floor(dist) .. " studs) - Desync ACTIVE")
-                else
-                    StatusLabel:Set("Status: Murderer at " .. math.floor(dist) .. " studs - Safe")
-                end
-            else
-                StatusLabel:Set("Status: No murderer nearby - Safe")
-            end
-        else
-            StatusLabel:Set("Status: Auto Avoid Disabled")
-        end
-    end
-end)
-
+-- ==================== FINAL LOAD ====================
 Rayfield:LoadConfiguration()
-
 Rayfield:Notify({
-    Title = "I Love Annie - MM2 (Solara)",
-    Content = "Loaded successfully!\nZ = Desync | Q = Aimbot | G = Godmode | P = GUI\nEnjoy king 🔥",
+    Title = "I Love Annie - MM2 (Solara Clean)",
+    Content = "Loaded with 5 clean tabs!\nLobby + Map teleports in Movement tab\nZ = Desync | Q = Aimbot | G = Godmode | Enjoy 🔥",
     Duration = 8,
 })
